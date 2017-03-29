@@ -31,6 +31,7 @@ end
     @test e < big(20//6)
     @test e^pi == exp(pi)
     @test e^2 == exp(2)
+    @test e^Val{2} == exp(2)
     @test e^2.4 == exp(2.4)
     @test e^(2//3) == exp(2//3)
 
@@ -128,6 +129,7 @@ end
         yi = 4
         @testset "Random values" begin
             @test x^y ≈ big(x)^big(y)
+            @test x^Val{1} === x
             @test x^yi ≈ big(x)^yi
             @test acos(x) ≈ acos(big(x))
             @test acosh(1+x) ≈ acosh(big(1+x))
