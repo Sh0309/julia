@@ -653,6 +653,41 @@ mktempdir() do dir
         end
     end
 
+    @testset "Merges" begin
+        path = joinpath(dir, "Example.Merge")
+        repo = LibGit2.clone(cache_repo, path)
+        try
+            oldhead = LibGit2.head_oid(repo)
+            LibGit2.branch!(repo, "branch/merge_a")
+            open(joinpath(LibGit2.path(repo),"file1"),"w") do f
+                write(f, "111\n")
+            end
+            LibGit2.add!(repo, "file1")
+            LibGit2.commit(repo, "add file1")
+
+            # switch back, add a commit, try to merge
+            # from branch/merge_a
+            LibGit2.branch!(repo, "master")
+
+            open(joinpath(LibGit2.path(repo), "file2"), "w") do f
+                write(f, "222\n")
+            end
+            LibGit2.add!(repo, "file2")
+            LibGit2.commit(repo, "add file2")
+
+            upst_ann = LibGit2.GitAnnotated(repo, "branch/merge_a")
+            head_ann = LibGit2.GitAnnotated(repo, "master")
+
+            # (fail to) merge them because we can't fastforward
+            @test !LibGit2.merge!(repo, [upst_ann], true)
+            # merge them now that we allow non-ff
+            @test LibGit2.merge!(repo, [upst_ann], false)
+            @test LibGit2.is_ancestor_of(string(oldhead), string(LibGit2.head_oid(repo)), repo)
+        finally
+            close(repo)
+        end
+    end
+
     @testset "Fetch from cache repository" begin
         repo = LibGit2.GitRepo(test_repo)
         try
